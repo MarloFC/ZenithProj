@@ -81,8 +81,11 @@ export interface UserPreferences {
     weightUnit: 'kg' | 'lbs';
     soundEnabled: boolean;
     hapticEnabled: boolean;
+    vibrationPattern?: 'single' | 'continuous';
     timerAutoStart: boolean;
-    theme?: 'system' | 'light' | 'dark';
+    theme: 'system' | 'light' | 'dark';
+    lastQuickTimerMinutes: string;
+    lastQuickTimerSeconds: string;
 }
 
 // ============ History Types ============

@@ -3,9 +3,8 @@ import Colors from '@/constants/Colors';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useUIStore } from '@/stores/uiStore';
 import { FontAwesome } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 // You would ideally bundle a sound file like require('@/assets/sounds/alarm.mp3')
@@ -18,44 +17,20 @@ export function TimerFinishedModal() {
     const { resetTimer } = useSessionStore();
     const colorScheme = useColorScheme() ?? 'light';
     const colors = Colors[colorScheme];
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
+    // const [sound, setSound] = useState<Audio.Sound | null>(null);
 
+    // Sound playback removed as per user request (stop sound when app is open)
+    // The "Time's Up" modal is now visual-only (+ haptics from CircularTimer)
+    /*
     useEffect(() => {
         let soundObject: Audio.Sound | null = null;
-
-        const playSound = async () => {
-            if (isTimerAlertVisible) {
-                try {
-                    const { sound } = await Audio.Sound.createAsync(
-                        // In a real app, require('../assets/sounds/alarm.mp3')
-                        { uri: ALARM_SOUND_URI },
-                        { isLooping: true, shouldPlay: true }
-                    );
-                    soundObject = sound;
-                    setSound(sound);
-                    await sound.playAsync();
-                } catch (error) {
-                    console.log('Error playing sound', error);
-                }
-            }
-        };
-
-        if (isTimerAlertVisible) {
-            playSound();
-        }
-
-        return () => {
-            if (soundObject) {
-                soundObject.stopAsync().catch(() => { });
-                soundObject.unloadAsync().catch(() => { });
-            }
-        };
+        // ... (sound logic removed)
     }, [isTimerAlertVisible]);
+    */
 
     const handleStop = async () => {
         // Dismiss the modal first - this triggers the useEffect cleanup above
         hideTimerAlert();
-        setSound(null);
 
         // Reset the timer state (clears totalSeconds, preventing re-trigger of alert)
         resetTimer();

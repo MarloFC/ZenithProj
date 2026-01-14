@@ -12,8 +12,10 @@ interface SettingsState extends UserPreferences {
     setWeightUnit: (unit: 'kg' | 'lbs') => void;
     setSoundEnabled: (enabled: boolean) => void;
     setHapticEnabled: (enabled: boolean) => void;
+    setVibrationPattern: (pattern: 'single' | 'continuous') => void;
     setTimerAutoStart: (enabled: boolean) => void;
     setTheme: (theme: 'system' | 'light' | 'dark') => void;
+    setLastQuickTimer: (minutes: string, seconds: string) => void;
     resetToDefaults: () => void;
 }
 
@@ -22,8 +24,11 @@ const defaultSettings: UserPreferences = {
     weightUnit: 'kg',
     soundEnabled: true,
     hapticEnabled: true,
+    vibrationPattern: 'single', // Default to single
     timerAutoStart: true,
     theme: 'system',
+    lastQuickTimerMinutes: '3',
+    lastQuickTimerSeconds: '0',
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -39,9 +44,16 @@ export const useSettingsStore = create<SettingsState>()(
 
             setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
 
+            setVibrationPattern: (pattern) => set({ vibrationPattern: pattern }),
+
             setTimerAutoStart: (enabled) => set({ timerAutoStart: enabled }),
 
             setTheme: (theme) => set({ theme }),
+
+            setLastQuickTimer: (minutes, seconds) => set({
+                lastQuickTimerMinutes: minutes,
+                lastQuickTimerSeconds: seconds
+            }),
 
             resetToDefaults: () => set(defaultSettings),
         }),

@@ -4,6 +4,7 @@
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import { useSessionStore } from '@/stores/sessionStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { FontAwesome } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -29,10 +30,8 @@ export default function CustomTimerScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const colors = Colors[colorScheme];
 
-    const [showEditModal, setShowEditModal] = useState(true); // Show on first load
-    const [editMinutes, setEditMinutes] = useState('3');
-    const [editSeconds, setEditSeconds] = useState('0');
-    const [timeIsSet, setTimeIsSet] = useState(false);
+    // Get persisted values from store
+    const { lastQuickTimerMinutes, lastQuickTimerSeconds, setLastQuickTimer } = useSettingsStore();
 
     const {
         timerSeconds,
@@ -43,6 +42,15 @@ export default function CustomTimerScreen() {
         resetTimer,
         tickTimer,
     } = useSessionStore();
+
+    // Determine initial state based on global timer
+    // If timer is running OR has time set (paused), show timer face, not modal
+    const isRunningOrHasValue = isTimerRunning || (timerTotalSeconds > 0 && timerSeconds > 0);
+
+    const [showEditModal, setShowEditModal] = useState(!isRunningOrHasValue);
+    const [editMinutes, setEditMinutes] = useState(lastQuickTimerMinutes);
+    const [editSeconds, setEditSeconds] = useState(lastQuickTimerSeconds);
+    const [timeIsSet, setTimeIsSet] = useState(isRunningOrHasValue);
 
     const progress = useSharedValue(1);
     const SIZE = 280;
@@ -106,6 +114,10 @@ export default function CustomTimerScreen() {
                 timerTotalSeconds: totalSeconds,
                 isTimerRunning: false,
             }));
+
+            // Persist the new default
+            setLastQuickTimer(editMinutes, editSeconds);
+
             setTimeIsSet(true);
             setShowEditModal(false);
         }
@@ -181,7 +193,7 @@ export default function CustomTimerScreen() {
                             style={styles.timeDisplay}
                         >
                             <Text style={[styles.timeText, { color: colors.text }]}>
-                                {formatTime(timerSeconds || timerTotalSeconds || (timeIsSet ? (parseInt(editMinutes) * 60 + parseInt(editSeconds)) : 0))}
+                                {formatTime(timerSeconds || timerTotalSeconds || (timeIsSet ? ((parseInt(editMinutes) || 0) * 60 + (parseInt(editSeconds) || 0)) : 0))}
                             </Text>
                             {!isTimerRunning && timerSeconds > 0 && (
                                 <Text style={[styles.tapHint, { color: colors.textMuted }]}>

@@ -2,7 +2,7 @@
   "exercises": [
     {
       "id": "custom_timer",
-      "name": "⏱️ Custom Timer / Rest",
+      "name": "Custom Timer",
       "muscleGroup": "other",
       "exerciseType": "other",
       "defaultRestSeconds": {

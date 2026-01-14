@@ -202,6 +202,23 @@ export default function SettingsScreen() {
               trackColor={{ false: colors.border, true: colors.primary }}
             />
           </SettingRow>
+
+          {/* New Vibration Pattern Toggle */}
+          <SettingRow
+            icon="mobile"
+            title="Vibration Style"
+            subtitle="Continuous vibrates until you stop it"
+            vertical={true}
+          >
+            <ToggleButton
+              options={[
+                { value: 'single', label: 'Single' },
+                { value: 'continuous', label: 'Continuous' },
+              ]}
+              value={useSettingsStore(s => s.vibrationPattern || 'single')}
+              onChange={(v: 'single' | 'continuous') => useSettingsStore.getState().setVibrationPattern(v)}
+            />
+          </SettingRow>
         </View>
 
         {/* About Section */}
@@ -221,7 +238,7 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 

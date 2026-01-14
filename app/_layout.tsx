@@ -104,6 +104,17 @@ export default function RootLayout() {
         lightColor: '#FF231F7C',
         sound: 'default', // Explicitly request default sound
       });
+
+      // Channel 2: Continuous Vibration (Long Pattern)
+      // Pattern: 0ms wait, 1000ms vibe, 1000ms pause, repeat... (approx 30s total)
+      const continuousPattern = Array(30).fill([1000, 1000]).flat();
+      await Notifications.setNotificationChannelAsync('timer-channel-continuous', {
+        name: 'Continuous Timer Alarm',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, ...continuousPattern],
+        lightColor: '#FF231F7C',
+        sound: 'default',
+      });
     }
   };
 

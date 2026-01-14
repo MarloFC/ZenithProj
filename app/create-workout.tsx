@@ -40,19 +40,60 @@ export default function CreateWorkoutScreen() {
 
     const [showExercisePicker, setShowExercisePicker] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedExerciseIds, setSelectedExerciseIds] = useState<string[]>([]);
     const [editingExercise, setEditingExercise] = useState<number | null>(null);
 
     const filteredExercises = searchExercises(searchQuery);
 
     const handleAddExercise = (exercise: Exercise) => {
-        setExercises([
-            ...exercises,
+        setExercises(prev => [
+            ...prev,
             {
                 exerciseId: exercise.id,
                 targetSets: 3,
                 targetReps: 10,
             },
         ]);
+        // Only close if not in multi-select mode
+        if (selectedExerciseIds.length === 0) {
+            setShowExercisePicker(false);
+            setSearchQuery('');
+        }
+    };
+
+    const handleToggleSelection = (id: string) => {
+        if (selectedExerciseIds.includes(id)) {
+            setSelectedExerciseIds(prev => prev.filter(existingId => existingId !== id));
+        } else {
+            setSelectedExerciseIds(prev => [...prev, id]);
+        }
+    };
+
+    const handleExercisePress = (exercise: Exercise) => {
+        if (selectedExerciseIds.length > 0) {
+            handleToggleSelection(exercise.id);
+        } else {
+            handleAddExercise(exercise);
+        }
+    };
+
+    const handleExerciseLongPress = (exercise: Exercise) => {
+        if (selectedExerciseIds.length === 0) {
+            // Enter selection mode
+            handleToggleSelection(exercise.id);
+        }
+    };
+
+    const handleAddSelectedExercises = () => {
+        const selected = filteredExercises.filter(ex => selectedExerciseIds.includes(ex.id));
+        const newExercises = selected.map(ex => ({
+            exerciseId: ex.id,
+            targetSets: 3,
+            targetReps: 10,
+        }));
+
+        setExercises(prev => [...prev, ...newExercises]);
+        setSelectedExerciseIds([]);
         setShowExercisePicker(false);
         setSearchQuery('');
     };
@@ -95,20 +136,35 @@ export default function CreateWorkoutScreen() {
         router.back();
     };
 
-    const renderExerciseItem = ({ item }: { item: Exercise }) => (
-        <Pressable
-            style={[styles.exercisePickerItem, { borderBottomColor: colors.border }]}
-            onPress={() => handleAddExercise(item)}
-        >
-            <View>
-                <Text style={[styles.exercisePickerName, { color: colors.text }]}>{item.name}</Text>
-                <Text style={[styles.exercisePickerMeta, { color: colors.textSecondary }]}>
-                    {item.muscleGroup.replace('_', ' ')} • {item.exerciseType}
-                </Text>
-            </View>
-            <FontAwesome name="plus-circle" size={24} color={colors.primary} />
-        </Pressable>
-    );
+    const renderExerciseItem = ({ item }: { item: Exercise }) => {
+        const isSelected = selectedExerciseIds.includes(item.id);
+
+        return (
+            <Pressable
+                style={[
+                    styles.exercisePickerItem,
+                    { borderBottomColor: colors.border },
+                    isSelected && { backgroundColor: colors.backgroundSecondary }
+                ]}
+                onPress={() => handleExercisePress(item)}
+                onLongPress={() => handleExerciseLongPress(item)}
+                delayLongPress={300}
+            >
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.exercisePickerName, { color: colors.text }]}>{item.name}</Text>
+                    <Text style={[styles.exercisePickerMeta, { color: colors.textSecondary }]}>
+                        {item.muscleGroup.replace('_', ' ')} • {item.exerciseType}
+                    </Text>
+                </View>
+
+                {isSelected ? (
+                    <FontAwesome name="check-circle" size={24} color={colors.success} />
+                ) : (
+                    <FontAwesome name="plus-circle" size={24} color={colors.primary} />
+                )}
+            </Pressable>
+        );
+    };
 
     return (
         <>
@@ -223,10 +279,19 @@ export default function CreateWorkoutScreen() {
                                     <View style={styles.exerciseItemHeader}>
                                         <View style={styles.exerciseItemInfo}>
                                             <TextInput
-                                                style={[styles.exerciseItemName, { color: colors.text }]}
-                                                value={ex.customName || exercise?.name || ''}
+                                                style={[
+                                                    styles.exerciseItemName,
+                                                    {
+                                                        color: colors.text,
+                                                        borderBottomWidth: 1,
+                                                        borderBottomColor: colors.border,
+                                                        paddingVertical: 4
+                                                    }
+                                                ]}
+                                                // Check if customName is strictly undefined to allow empty string
+                                                value={ex.customName !== undefined ? ex.customName : exercise?.name}
                                                 onChangeText={(text) => handleUpdateExercise(index, { customName: text })}
-                                                placeholder="Exercise name"
+                                                placeholder={exercise?.name || "Exercise name"}
                                                 placeholderTextColor={colors.textMuted}
                                             />
                                             <Text style={[styles.exerciseItemMuscle, { color: colors.textSecondary }]}>
@@ -329,11 +394,29 @@ export default function CreateWorkoutScreen() {
                 >
                     <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
                         <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                            <Pressable onPress={() => setShowExercisePicker(false)}>
-                                <Text style={{ color: colors.primary }}>Done</Text>
-                            </Pressable>
-                            <Text style={[styles.modalTitle, { color: colors.text }]}>Add Exercise</Text>
-                            <View style={{ width: 40 }} />
+                            {selectedExerciseIds.length > 0 ? (
+                                <>
+                                    <Pressable onPress={() => setSelectedExerciseIds([])}>
+                                        <Text style={{ color: colors.error }}>Clear</Text>
+                                    </Pressable>
+                                    <Text style={[styles.modalTitle, { color: colors.text }]}>
+                                        {selectedExerciseIds.length} Selected
+                                    </Text>
+                                    <Pressable onPress={handleAddSelectedExercises}>
+                                        <Text style={{ color: colors.primary, fontWeight: 'bold' }}>
+                                            Add ({selectedExerciseIds.length})
+                                        </Text>
+                                    </Pressable>
+                                </>
+                            ) : (
+                                <>
+                                    <Pressable onPress={() => setShowExercisePicker(false)}>
+                                        <Text style={{ color: colors.primary }}>Done</Text>
+                                    </Pressable>
+                                    <Text style={[styles.modalTitle, { color: colors.text }]}>Add Exercise</Text>
+                                    <View style={{ width: 40 }} />
+                                </>
+                            )}
                         </View>
 
                         <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>

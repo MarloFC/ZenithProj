@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { useSettingsStore } from './settingsStore';
 import { useWorkoutStore } from './workoutStore';
 
 interface SessionState {
@@ -233,22 +234,33 @@ export const useSessionStore = create<SessionState>()(
                 const now = Date.now();
                 const endTime = now + seconds * 1000;
 
+                // Get user settings for vibration pattern
+                const { vibrationPattern } = useSettingsStore.getState();
+
+                // Determine channel based on pattern
+                // 'continuous' -> 'timer-channel-continuous' (Long pattern)
+                // 'single' -> 'timer-channel' (Default/Short pattern)
+                const channelId = vibrationPattern === 'continuous' ? 'timer-channel-continuous' : 'timer-channel';
+
                 // Schedule notification
                 await Notifications.scheduleNotificationAsync({
                     content: {
                         title: 'Rest Time Complete! 🚀',
                         body: 'Time to get back to work!',
                         sound: true,
-                        vibrate: [0, 250, 250, 250],
-                        categoryIdentifier: 'timer-end', // Use the category with actions
-                        // @ts-ignore - 'channelId' is valid but might not be in the strict type depending on version
-                        channelId: 'timer-channel',
+                        // Vibrate array is ignored on Android 8+ if channel has pattern, but useful for iOS/older Android
+                        vibrate: vibrationPattern === 'continuous'
+                            ? [0, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
+                            : [0, 250, 250, 250],
+                        categoryIdentifier: 'timer-end',
+                        // @ts-ignore
+                        channelId: channelId,
                     },
                     trigger: {
                         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
                         seconds: seconds,
                         repeats: false,
-                        channelId: 'timer-channel', // Explicitly set channel for trigger too if needed
+                        channelId: channelId,
                     },
                 });
 
